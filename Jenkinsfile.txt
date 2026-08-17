@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+    environment {
+        // Update this path to match your actual Nginx directory
+        DEPLOY_DIR = "C:\\nginx\\html\\jenkins-demo"
+
+    }
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building deployment package...'
+                powershell '''
+                if (-Not (Test-Path dist)) { New-Item -ItemType Directory -Force -Path dist }
+                Copy-Item -Path index.html, style.css -Destination dist\\ -Force
+                '''
+            }
+        }
+        stage('Test') {
+            steps {
+                echo 'Testing website...'
+                powershell '''
+                if (-Not (Test-Path dist\\index.html)) { Write-Error "index.html missing"; exit 1 }
+                if (-Not (Test-Path dist\\style.css)) { Write-Error "style.css missing"; exit 1 }
+                if (-Not (Select-String -Path dist\\index.html -Pattern "<html>" -Quiet)) { Write-Error "Missing <html> tag"; exit 1 }
+                if (-Not (Select-String -Path dist\\index.html -Pattern "<title>" -Quiet)) { Write-Error "Missing <title> tag"; exit 1 }
+                if (-Not (Select-String -Path dist\\index.html -Pattern "</html>" -Quiet)) { Write-Error "Missing </html> tag"; exit 1 }
+                Write-Output "All tests passed."
+                '''
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying the website to Nginx...'
+                powershell '''
+                if (-Not (Test-Path $env:DEPLOY_DIR)) { New-Item -ItemType Directory -Force -Path $env:DEPLOY_DIR }
+                Copy-Item -Path dist\\* -Destination $env:DEPLOY_DIR -Recurse -Force
+                '''
+            }
+        }
+        stage('Verify Deployment') {
+            steps {
+                echo 'Verifying the deployed website...'
+                powershell '''
+                Start-Sleep -Seconds 2
+                Invoke-WebRequest -Uri "http://localhost:8081" -UseBasicParsing -ErrorAction Stop | Out-Null
+                Write-Output "Deployment verified successfully."
+                '''
+            }
+        }
+    }
+    post {
+        success {
+            echo 'CI/CD pipeline completed successfully.'
+            echo 'Website: http://localhost:8081'
+        }
+        failure {
+            echo 'Pipeline failed. The website was not successfully deployed.'
+        }
+        always {
+            cleanWs()
+        }
+    }
+}
