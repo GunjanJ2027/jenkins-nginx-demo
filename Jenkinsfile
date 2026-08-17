@@ -15,13 +15,13 @@ pipeline {
                 '''
             }
         }
-        stage('Test') {
+      stage('Test') {
             steps {
                 echo 'Testing website...'
                 powershell '''
                 if (-Not (Test-Path dist\\index.html)) { Write-Error "index.html missing"; exit 1 }
                 if (-Not (Test-Path dist\\style.css)) { Write-Error "style.css missing"; exit 1 }
-                if (-Not (Select-String -Path dist\\index.html -Pattern "<html>" -Quiet)) { Write-Error "Missing <html> tag"; exit 1 }
+                if (-Not (Select-String -Path dist\\index.html -Pattern "<html" -Quiet)) { Write-Error "Missing <html tag"; exit 1 }
                 if (-Not (Select-String -Path dist\\index.html -Pattern "<title>" -Quiet)) { Write-Error "Missing <title> tag"; exit 1 }
                 if (-Not (Select-String -Path dist\\index.html -Pattern "</html>" -Quiet)) { Write-Error "Missing </html> tag"; exit 1 }
                 Write-Output "All tests passed."
