@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         // Update this path to match your actual Nginx directory
-        DEPLOY_DIR = "C:\\nginx\\html\\jenkins-demo"
+        DEPLOY_DIR = "C:\\nginx\\nginx-1.31.3\\html\\jenkins-demo"
 
     }
     stages {
